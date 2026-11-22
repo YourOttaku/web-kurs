@@ -1,0 +1,102 @@
+Project cookbook {
+  database_type: 'PostgreSQL'
+  Note: 'кулінарна книга з реляційним зіставленням інгредієнтів'
+}
+
+Table users {
+  id bigint [pk, increment]
+  name varchar [not null]
+  email varchar [not null, unique]
+  email_verified_at timestamp [null]
+  password varchar [not null]
+  remember_token varchar [null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'користувачі системи'
+}
+
+Table categories {
+  id bigint [pk, increment]
+  name varchar [not null, unique]
+  slug varchar [not null, unique]
+  description text [null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'категорії страв'
+}
+
+Table ingredients {
+  id bigint [pk, increment]
+  name varchar [not null, unique]
+  normalized_name varchar [not null]
+  unit_default varchar [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    normalized_name
+  }
+
+  Note: 'довідник унікальних інгредієнтів'
+}
+
+Table recipes {
+  id bigint [pk, increment]
+  external_meal_id varchar [null, unique, note: 'idMeal з TheMealDB']
+  title varchar [not null]
+  category_id bigint [not null]
+  instructions text [not null]
+  image_url varchar(500) [null]
+  cooking_time_minutes smallint [null]
+  total_ingredients_count smallint [not null, default: 0]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    category_id
+    total_ingredients_count
+  }
+
+  Note: 'каталог страв'
+}
+
+Table ingredient_recipe {
+  id bigint [pk, increment]
+  recipe_id bigint [not null]
+  ingredient_id bigint [not null]
+  measure_raw varchar [null, note: 'вихідний текст, наприклад 200g']
+  amount decimal(8,2) [null]
+  unit varchar [null]
+  is_optional boolean [not null, default: false]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (recipe_id, ingredient_id) [unique]
+    ingredient_id
+  }
+
+  Note: 'зв’язок M:N між рецептами та інгредієнтами з кількістю та одиницею'
+}
+
+Table user_pantry {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  ingredient_id bigint [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, ingredient_id) [unique]
+  }
+
+  Note: 'інгредієнти в холодильнику користувача'
+}
+
+Ref: recipes.category_id > categories.id [delete: restrict]
+Ref: ingredient_recipe.recipe_id > recipes.id [delete: cascade]
+Ref: ingredient_recipe.ingredient_id > ingredients.id [delete: restrict]
+Ref: user_pantry.user_id > users.id [delete: cascade]
+Ref: user_pantry.ingredient_id > ingredients.id [delete: cascade]
