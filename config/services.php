@@ -1,3 +1,4 @@
+<?php
 // config/services.php
 return [
     // ... інші сервіси
